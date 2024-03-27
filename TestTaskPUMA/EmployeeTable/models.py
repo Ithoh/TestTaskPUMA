@@ -6,3 +6,4 @@ class Employee(models.Model):
     office = models.CharField(max_length=200)
     age = models.IntegerField(default=0)
     start_date = models.DateTimeField("Start Date")
+    salary = models.IntegerField(default=0)
