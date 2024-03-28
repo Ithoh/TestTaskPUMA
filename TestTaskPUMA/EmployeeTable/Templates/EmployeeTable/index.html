@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Employee Table</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
+    <script type="module">
+        {% comment %} Import RE:DOM library {% endcomment %}
+        import { el, mount } from "https://redom.js.org/redom.es.min.js";
+
+        var employeeList = {{ employee_list_json|safe|escape}};
+
+        function generateData(Employee_list) {
+          var arr = [];
+          employeeList.forEach(function(employee) {
+            arr.push({  'Name': employee.name,
+                        'Position': employee.position,
+                        'Office': employee.office,
+                        'Age': employee.age,
+                        'Start Date': employee.start_date,
+                        'Salary': employee.salary
+                      })
+          })
+          return arr;
+        }
+
+        const gridOptions = {
+          rowData: generateData(employeeList),
+          columnDefs: [
+            { field: "Name" },
+            { field: "Position" },
+            { field: "Office" },
+            { field: "Age" },
+            { field: "Start Date" },
+            { field: "Salary" },
+          ],
+        };
+
+        const myTable = el("#myTable.ag-theme-quartz", {style: "height: 500px"});
+        mount(document.body, myTable);
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const gridDiv = document.querySelector('#myTable');
+          const api = agGrid.createGrid(gridDiv, gridOptions);
+      });
+    </script>
+  </head>
+
+  <body>
+    {% comment %} {% if Employee_list %}
+    <ul>
+      {% for employee in Employee_list %}
+      <li>{{ employee.name }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No employees registered in the database</p>
+    {% endif %} {% endcomment %}
+  </body>
+</html>
