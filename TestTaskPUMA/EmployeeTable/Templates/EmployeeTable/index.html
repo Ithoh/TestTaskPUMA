@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Employee Table</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
+    <script type="module">
+      {% comment %} Import RE:DOM library {% endcomment %}
+      import { el, mount, setChildren } from "https://redom.js.org/redom.es.min.js";
+
+      var employeeList = {{ employee_list_json|safe|escape }};
+
+      // Function used to format the salary in the table
+      function currentcyFormater(params){
+        return "$ " + Math.floor(params.value).toLocaleString();
+      }
+
+      class customRefreshBtn{
+        eGui;
+        eButton;
+        eventListener;
+
+        init(params){
+          this.eGui = el("form");
+          let myBtn = el("button.refresh-btn", "Refresh");
+          this.eventListener = () => alert("clicked");
+          myBtn.addEventListener("click", this.eventListener);
+          setChildren(this.eGui, myBtn);
+        }
+
+        getGui(){
+          return this.eGui;
+        }
+      }
+
+      // Generate the object needed to build the table with AG grid
+      function generateData(employeeTable) {
+        // Create options for the grid
+        var gridOptions = {
+          rowData: [],
+          columnDefs: [
+            { field:"", cellRenderer: customRefreshBtn},
+            { field: "Name" },
+            { field: "Position" },
+            { field: "Office" },
+            { field: "Age" },
+            { field: "Start Date" },
+            { field: "Salary", valueFormatter: currentcyFormater },
+          ],
+        };
+
+        var arr = [];
+        // Loop over the employee table and create the rows for the grid
+        employeeTable.forEach(function (employee) {
+          arr.push({
+            Name: employee.name,
+            Position: employee.position,
+            Office: employee.office,
+            Age: employee.age,
+            "Start Date": employee.start_date,
+            Salary: employee.salary,
+          });
+        });
+        gridOptions.rowData = arr;
+
+        return gridOptions;
+      }
+
+      const myTable = el("#myTable.ag-theme-quartz-dark", {style: "height: 400px"});
+      mount(document.body, myTable);
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const gridDiv = document.querySelector("#myTable");
+        const api = agGrid.createGrid(gridDiv, generateData(employeeList));
+      });
+    </script>
+  </head>
+
+  <body></body>
+</html>
