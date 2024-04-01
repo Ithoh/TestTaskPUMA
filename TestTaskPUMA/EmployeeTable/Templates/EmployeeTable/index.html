@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -5,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Employee Table</title>
+
+    <link rel="stylesheet" href="{% static 'EmployeeTable\index.css' %}" />
 
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
 
@@ -15,19 +18,19 @@
       var employeeList = {{ employee_list_json|safe|escape }};
 
       // Function used to format the salary in the table
-      function currentcyFormater(params){
-        return "$ " + Math.floor(params.value).toLocaleString();
+      function currencyFormater(salary){
+        return "$ " + Math.floor(salary).toLocaleString();
       }
 
-      class customRefreshBtn{
+      // Custom class used for the rendering of the refresh button
+      class customRefreshBtn {
         eGui;
-        eButton;
         eventListener;
 
         init(params){
           this.eGui = el("form");
           let myBtn = el("button.refresh-btn", "Refresh");
-          this.eventListener = () => alert("clicked");
+          this.eventListener = () => alert("clicked, but not working :(");
           myBtn.addEventListener("click", this.eventListener);
           setChildren(this.eGui, myBtn);
         }
@@ -37,21 +40,63 @@
         }
       }
 
+      // Custom class used for the rendering of the user button
+      class customUserBtn {
+        eGui;
+        eventListener;
+
+        init(params){
+          this.eGui = el("div");
+          // params.value reffer to the user in the cell, log param to see all
+          // values
+          let myBtn = el("button.user-btn", params.value);
+          myBtn.addEventListener("click", function(){
+
+            // Get the id of the user salary div
+            const id = "#user" + params.node.id;
+
+            // get row information
+            const rowNode = params.node;
+            const newSalary = params.data.Salary * 1.1;
+            // update salary for one specific user
+            rowNode.setDataValue("Salary", newSalary);
+
+            // animate the salary cell while changing the value
+            const salaryDiv = document.querySelector(id)
+            salaryDiv.classList.add("animateText");
+
+            salaryDiv.addEventListener("animationend", () => {
+              salaryDiv.classList.remove("animateText");
+            });
+          });
+
+          setChildren(this.eGui, myBtn);
+        }
+
+        getGui(){
+          return this.eGui;
+        }
+      }
+
+      // Define custom id on the salary cell
+      class customSalaryComponent {
+        eGui;
+
+        init(params){
+          // Get the row id of the table
+          const id = "#user" + params.node.id;
+
+          this.eGui = el(id, currencyFormater(params.value));
+
+        }
+
+        getGui(){
+          return this.eGui;
+        }
+      }
+
       // Generate the object needed to build the table with AG grid
       function generateData(employeeTable) {
-        // Create options for the grid
-        var gridOptions = {
-          rowData: [],
-          columnDefs: [
-            { field:"", cellRenderer: customRefreshBtn},
-            { field: "Name" },
-            { field: "Position" },
-            { field: "Office" },
-            { field: "Age" },
-            { field: "Start Date" },
-            { field: "Salary", valueFormatter: currentcyFormater },
-          ],
-        };
 
         var arr = [];
         // Loop over the employee table and create the rows for the grid
@@ -65,14 +110,32 @@
             Salary: employee.salary,
           });
         });
-        gridOptions.rowData = arr;
+
+        // Create options for the grid
+        var gridOptions = {
+          rowData: arr,
+          columnDefs: [
+            { field:"", cellRenderer: customRefreshBtn},
+            { field: "Name", cellRenderer: customUserBtn },
+            { field: "Position" },
+            { field: "Office" },
+            { field: "Age" },
+            { field: "Start Date" },
+            { field: "Salary", cellRenderer: customSalaryComponent},
+          ],
+          defaultColDef:{
+            enableCellChangeFlash : true
+          }
+        };
 
         return gridOptions;
       }
 
+      // Create the table div with redom
       const myTable = el("#myTable.ag-theme-quartz-dark", {style: "height: 400px"});
       mount(document.body, myTable);
 
+      // Create the table one the DOM is loaded
       document.addEventListener("DOMContentLoaded", () => {
         const gridDiv = document.querySelector("#myTable");
         const api = agGrid.createGrid(gridDiv, generateData(employeeList));
